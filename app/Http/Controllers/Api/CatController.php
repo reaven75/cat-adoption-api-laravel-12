@@ -13,7 +13,7 @@ class CatController extends Controller
      */
     public function index()
     {
-        return response()->json(Cat::all());
+        return response()->json(Cat::all(), 200);
     }
 
     /**
@@ -21,8 +21,32 @@ class CatController extends Controller
      */
     public function store(Request $request)
     {
-        $cat = Cat::create($request->all());
-        return response()->json($cat, 201);
+
+        $validated = $request->validate([
+            'name'          => 'required|string|max:100',
+            'breed'         => 'required|string|max:100',
+            'gender'        => 'required|in:Male,Female',
+            'age'           => 'required|integer|min:0',
+            'location'      => 'required|string|max:255',
+            'is_available'  => 'required|boolean',
+            'is_vaccinated' => 'required|boolean',
+            'description'   => 'nullable|string',
+            'image_url' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        if ($request->hasFile('image_url')) {
+            $path = $request->file('image_url')->store('cats', 'public');
+            $validated['image_url'] = $path; // simpan nama file/ path ke DB
+        }
+
+        $cat = Cat::create($validated);
+
+
+
+        return response()->json([
+            'message' => 'Cat created successfully',
+            'data' => $cat
+        ], 201);
     }
 
     /**
@@ -31,6 +55,7 @@ class CatController extends Controller
     public function show(string $id)
     {
         $cat = Cat::find($id);
+
         if (!$cat) {
             return response()->json(['message' => 'cat not found'], 404);
         }
@@ -43,11 +68,29 @@ class CatController extends Controller
     public function update(Request $request, string $id)
     {
         $cat = Cat::find($id);
-        if ($cat) {
+
+        if (!$cat) {
             return response()->json(['message' => 'cat not found'], 404);
         }
-        $cat->update($request->all());
-        return response()->json($cat);
+
+        $validated = $request->validate([
+            'name'          => 'sometimes|required|string|max:100',
+            'breed'         => 'sometimes|required|string|max:100',
+            'gender'        => 'sometimes|required|in:Male,Female',
+            'age'           => 'sometimes|required|integer|min:0',
+            'location'      => 'sometimes|required|string|max:255',
+            'is_available'  => 'sometimes|boolean',
+            'is_vaccinated' => 'sometimes|boolean',
+            'description'   => 'nullable|string',
+            'image_url'     => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $cat->update($validated);
+
+        return response()->json([
+            'message' => 'Cat updated successfully',
+            'data'    => $cat
+        ], 201);
     }
 
     /**
@@ -60,6 +103,6 @@ class CatController extends Controller
             return response()->json(['message' => 'Cat not found'], 404);
         }
         $cat->delete();
-        return response()->json(['message' => 'Cat deleted successfully']);
+        return response()->json(['message' => 'Cat deleted successfully'], 200);
     }
 }
