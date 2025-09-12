@@ -26,19 +26,4 @@ class Cat extends Model
         'is_available'  => 'boolean',
         'is_vaccinated' => 'boolean',
     ];
-
-
-
-    protected function image(): Attribute
-    {
-        return Attribute::make(
-            // Accessor → ubah nama file jadi URL lengkap
-            get: fn($image) => $image ? url('/storage/' . $image) : null,
-
-            // Mutator → simpan hanya nama file, bukan path lengkap
-            set: fn($image) => $image instanceof \Illuminate\Http\UploadedFile
-                ? $image->store('cats', 'public') // simpan ke storage/app/public/cats
-                : $image
-        );
-    }
 }
